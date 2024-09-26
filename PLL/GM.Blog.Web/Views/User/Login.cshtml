@@ -1,0 +1,44 @@
+﻿﻿
+@model GM.Blog.BLL.ViewModels.Users.Request.UserLoginViewModel
+@{
+    ViewData["Title"] = "Авторизация";
+
+    var returnUrl = Context.Request.Query["ReturnUrl"] + "?userId=" + Context.Request.Query["UserId"];
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.1/jquery.validate.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.11/jquery.validate.unobtrusive.js"></script>
+
+<div class="max-width-350 m-auto">
+    <form class="mt-5" method="post" asp-controller="User" asp-action="Login" asp-route-userId="@Context.Request.Query["userId"]">
+        <h3>Вход в приложение</h3>
+        <hr class="hr"/>
+        <div asp-validation-summary="ModelOnly" class="text-danger fs-6"></div>
+
+        <input type="hidden" asp-for="ReturnUrl" value="@returnUrl"/>
+
+        <div class="form-group mb-4 position-relative">
+            <div class="row">
+                <label asp-for="UserEmail" class="form-label col-sm-3 col-form-label"></label>
+                <div class="col-sm-9">
+                    <input asp-for="UserEmail" class="form-control" />
+                </div>
+            </div>
+            <span asp-validation-for="UserEmail" class="text-danger error-message"></span>
+        </div>
+
+        <div class="form-group mb-4 position-relative">
+            <div class="row">
+                <label asp-for="Password" class="form-label col-sm-3 col-form-label"></label>
+                <div class="col-sm-9">
+                    <input asp-for="Password" class="form-control" />
+                </div>
+            </div>
+            <span asp-validation-for="Password" class="text-danger error-message"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary mb-2">Войти</button>
+        <p class="form-text">Еще нет аккаунта? <a asp-action="Register" asp-controller="User" class="text-decoration-none">Зарегистрируйтесь</a></p>
+    </form>
+</div>

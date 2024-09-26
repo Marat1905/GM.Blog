@@ -1,0 +1,30 @@
+﻿@model GM.Blog.BLL.ViewModels.Users.Response.UsersViewModel
+@{
+    ViewData["Title"] = "Пользователи";
+}
+
+<h3 class="mt-5">Все пользователи</h3>
+<a asp-action="Create" asp-controller="User" class="mb-3 text-decoration-none">Добавить пользователя</a>
+
+<div class="row justify-content-center">
+    @foreach (var user in Model.Users)
+    {
+        <div class="card m-3 col-8 col-md-5 col-lg-3">
+            <div class="card-body">
+                <a class="fs-5 mb-0 link-primary text-decoration-none" asp-action="View" asp-controller="User"
+                    asp-route-id="@user.Id">
+                    @user.UserName
+                </a>
+                <p class="text-black-50 mb-0">@($"{user.LastName} {user.FirstName}")</p>
+                @foreach (var role in user.Roles)
+                {
+                    <span class="badge tag-badge" onclick="document.getElementById('@(role.Id)').submit()">
+                        @role.Name
+                    </span>
+                    <form class="d-none" id="@role.Id" method="get" asp-action="GetUsers" asp-controller="User" asp-route-roleId="@role.Id"></form>
+                }
+            </div>
+            <p class="form-text text-end">@user.Email</p>
+        </div>
+    }
+</div>

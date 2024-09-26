@@ -1,0 +1,21 @@
+﻿@model GM.Blog.BLL.ViewModels.Roles.Response.RolesViewModel
+@{
+    ViewData["Title"] = "Роли";
+}
+
+<h3 class="mt-5">Все роли</h3>
+<a asp-action="Create" asp-controller="Role" class="mb-3 text-decoration-none">Добавить роль</a>
+
+<div class="row justify-content-center">
+    @foreach (var role in Model.Roles)
+    {
+        <div class="card m-3 col-8 col-sm-5 col-md-4 col-lg-3">
+            <div class="card-body">
+                <a class="fs-5 link-primary text-decoration-none" asp-action="View" asp-controller="Role" asp-route-id="@role.Id">
+                    @role.Name
+                </a>
+                <p class="mt-2 mb-0 form-text">@role.Description</p>
+            </div>
+        </div>
+    }
+</div>

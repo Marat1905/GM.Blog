@@ -1,0 +1,123 @@
+html {
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+    background-color: rgba(0,0,0,.03);
+}
+
+.bg-card-color {
+    background-color: rgba(0,0,0,.03);
+}
+
+.hr {
+    background-color: gray;
+}
+
+.font-m75 {
+    font-size: .75em;
+}
+
+.dropdown-menu-dark .dropdown-item:active {
+    color: #fff;
+    background-color: var(--bs-gray-600);
+}
+
+.nav-item {
+    margin-left: 1%;
+    margin-right: 1%;
+}
+
+.navbar-nav.flex-grow-1 {
+    margin-left: 4%;
+}
+
+.pos-bottom {
+    bottom: 20px;
+    right: 20px;
+}
+
+.max-width-350 {
+    max-width: 350px;
+}
+
+.max-width-450 {
+    max-width: 450px;
+}
+
+.max-width-550 {
+    max-width: 550px;
+}
+
+.max-width-600 {
+    max-width: 600px;
+}
+
+.max-width-800 {
+    max-width: 800px;
+}
+
+.error-message {
+    position: absolute;
+    font-size: 11px;
+    right: 0;
+}
+
+@media(max-width: 575.98px) {
+    .error-message {
+        display: none;
+    }
+}
+
+.input-validation-error {
+    border-color: var(--bs-danger);
+}
+
+.validation-summary-errors > ul {
+    list-style: none;
+}
+
+.input-primary-board:focus {
+    border-color: var(--bs-primary);
+}
+
+.tag-badge, .email-badge {
+    background: var(--bs-blue);
+    margin: 0 1px;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out;
+}
+
+.email-badge {
+    background: rgba(var(--bs-success-rgb));
+}
+
+    .tag-badge:hover, .email-badge:hover {
+        background: var(--bs-gray-600);
+        cursor: pointer;
+        transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out;
+    }
+
+
+.no-resize {
+    resize: none;
+}
+
+.text-pre-wrap {
+    white-space: pre-wrap;
+}
+
+.text-pre-line {
+    white-space: pre-line;
+}

@@ -1,0 +1,30 @@
+﻿
+@model GM.Blog.BLL.ViewModels.Tags.Request.TagEditViewModel
+@{
+    ViewData["Title"] = "Редактирование тега";
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.1/jquery.validate.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.11/jquery.validate.unobtrusive.js"></script>
+
+<div class="max-width-350 m-auto">
+    <form class="mt-5" method="post" asp-controller="Tag" asp-action="Edit">
+        <h3>Редактирование тега</h3>
+        <hr class="hr" />
+        <div asp-validation-summary="ModelOnly" class="text-danger fs-6"></div>
+
+        <div class="form-group mb-4 position-relative">
+            <div class="row">
+                <label asp-for="Name" class="form-label col-sm-3 col-form-label"></label>
+                <div class="col-sm-9">
+                    <input asp-for="Name" class="form-control" />
+                </div>
+            </div>
+            <span asp-validation-for="Name" class="text-danger error-message"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary mb-2">Сохранить</button>
+        <p class="form-text"><a asp-action="GetTags" asp-controller="Tag" class="text-decoration-none">Перейти к списку всех тегов</a></p>
+    </form>
+</div>
