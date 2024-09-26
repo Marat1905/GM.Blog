@@ -17,9 +17,12 @@ namespace GM.Blog.Web
         }
 
 
-        // Метод вызывается средой ASP.NET.
-        // Используйте его для подключения сервисов приложения
-        // Документация:  https://go.microsoft.com/fwlink/?LinkID=398940
+
+        /// <summary>
+        /// Метод вызывается средой ASP.NET.
+        /// Используйте его для подключения сервисов приложения
+        /// Документация:  https://go.microsoft.com/fwlink/?LinkID=398940
+        /// </summary>
         public void ConfigureServices( IServiceCollection services)
         {
 
@@ -51,8 +54,11 @@ namespace GM.Blog.Web
         }
 
 
-        // Метод вызывается средой ASP.NET.
-        // Используйте его для настройки конвейера запросов
+
+        /// <summary>
+        /// Метод вызывается средой ASP.NET.
+        /// Используйте его для настройки конвейера запросов
+        /// </summary>
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             // Проверяем, не запущен ли проект в среде разработки
