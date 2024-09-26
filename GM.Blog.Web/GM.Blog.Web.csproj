@@ -18,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\BLL\GM.Blog.BLL\GM.Blog.BLL.csproj" />
-    <ProjectReference Include="..\..\DAL\GM.Blog.DAL\GM.Blog.DAL.csproj" />
+    <ProjectReference Include="..\GM.Blog.BLL\GM.Blog.BLL.csproj" />
+    <ProjectReference Include="..\GM.Blog.DAL\GM.Blog.DAL.csproj" />
   </ItemGroup>
 
 </Project>
