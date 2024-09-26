@@ -1,6 +1,8 @@
-﻿namespace GM.Blog.BLL.Services
+﻿using GM.Blog.BLL.Services.Interfaces;
+
+namespace GM.Blog.BLL.Services
 {
-    public class CommentService
+    public class CommentService:ICommentService
     {
     }
 }

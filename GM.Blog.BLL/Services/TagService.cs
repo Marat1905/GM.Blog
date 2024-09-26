@@ -1,6 +1,8 @@
-﻿namespace GM.Blog.BLL.Services
+﻿using GM.Blog.BLL.Services.Interfaces;
+
+namespace GM.Blog.BLL.Services
 {
-    public class TagService
+    public class TagService:ITagService
     {
     }
 }
