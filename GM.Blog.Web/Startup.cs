@@ -53,6 +53,12 @@ namespace GM.Blog.Web
                 cfg.Password.RequireDigit = false;
             }).AddEntityFrameworkStores<BlogContext>();
 
+            services.ConfigureApplicationCookie(opt =>
+            {
+                opt.LoginPath = "/Login";
+                opt.AccessDeniedPath = "/AccessDenied";
+            });
+
             services.AddSession();
         }
 
@@ -87,6 +93,7 @@ namespace GM.Blog.Web
                 }
             });
 
+           
 
             app.UseStatusCodePages(async statusCodeContext =>
             {
