@@ -12,15 +12,13 @@ namespace GM.Blog.Web.Controllers
 {
     public class UserController : Controller
     {
-        private readonly IMapper _mapper;
         private readonly ILogger<UserController> _logger;
         private readonly IUserService _userService;
         private readonly IRoleService _roleService;
         private readonly SignInManager<User> _signInManager;
 
-        public UserController(IMapper mapper, ILogger<UserController> logger, IUserService userService, IRoleService roleService ,SignInManager<User> signInManager)
+        public UserController( ILogger<UserController> logger, IUserService userService, IRoleService roleService ,SignInManager<User> signInManager)
         {
-            _mapper = mapper;
             _logger = logger;
             _userService = userService;
             _roleService = roleService;
