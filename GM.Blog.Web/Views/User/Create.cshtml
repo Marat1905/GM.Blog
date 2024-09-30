@@ -1,21 +1,45 @@
-﻿@model GM.Blog.BLL.ViewModels.Users.Request.UserRegisterViewModel
+﻿@model GM.Blog.BLL.ViewModels.Users.Request.UserCreateViewModel
 @{
-    ViewData["Title"] = "Создание пользователя";
+    ViewData["Title"] = "Создание пользователя"; 
 }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.1/jquery.validate.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.11/jquery.validate.unobtrusive.js"></script>
 
+<script>
+    window.addEventListener('load',() => resetDataInDateInput());
+</script>
+
 <div class="max-width-550 m-auto mb-5">
     <form class="mt-5" method="post" asp-controller="User" asp-action="Create">
-        <h3>Регистрация пользователя</h3>
-        <hr class="hr" />
+        <h3>Создание пользователя</h3>
+        <hr  class="hr"/>
         <div asp-validation-summary="ModelOnly" class="text-danger fs-6"></div>
+
+        <div class="row">
+            @foreach (var role in Model.AllRoles!)
+            {
+                <div class="col-md-3 col-sm-4">
+                    <div class="form-check">
+                        @if(role == "User")
+                        {
+                            <input type="hidden" name="User" value="on"/>
+                        }
+                        <input class="form-check-input" type="checkbox" id="@role" @(role == "User" ? "disabled" : "")
+                               name="@(role != "User" ? $"{role}" : "")" @(Model.Roles.Contains(role) ? "checked" : null) />
+                        <label class="from-check-label @(role == "User" ? "text-secondary" : "")" for="@role">
+                            @role
+                        </label>
+                    </div>
+                </div>
+            }
+        </div>
+        <hr class="hr" />
 
         <div class="form-group mb-4 position-relative">
             <div class="row">
-                <label asp-for="LastName" class="form-label col-sm-4 col-form-label"></label>
+            <label asp-for="LastName" class="form-label col-sm-4 col-form-label"></label>
                 <div class="col-sm-8">
                     <input asp-for="LastName" class="form-control" />
                 </div>
@@ -83,6 +107,7 @@
             <span asp-validation-for="PasswordConfirm" class="text-danger error-message"></span>
         </div>
 
-        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+        <button type="submit" class="btn btn-primary mb-2">Создать</button>
+        <p class="form-text"><a asp-action="GetUsers" asp-controller="User" class="text-decoration-none">Перейти к списку всех пользователей</a></p>
     </form>
 </div>

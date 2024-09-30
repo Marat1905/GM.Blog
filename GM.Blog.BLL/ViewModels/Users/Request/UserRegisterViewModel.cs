@@ -12,14 +12,14 @@ namespace GM.Blog.BLL.ViewModels.Users.Request
         /// </summary>
         [Required(ErrorMessage = "Укажите Имя")]
         [Display(Name = "Имя")]
-        public required string FirstName { get; set; }
+        public string FirstName { get; set; }
 
         /// <summary>
         /// Фамилия пользователя
         /// </summary>
         [Required(ErrorMessage = "Укажите Фамилию")]
         [Display(Name = "Фамилия")]
-        public required string LastName { get; set; }
+        public string LastName { get; set; }
 
         /// <summary>
         /// Отчество пользователя
@@ -34,7 +34,7 @@ namespace GM.Blog.BLL.ViewModels.Users.Request
         [Required(ErrorMessage = "Не указан Email")]
         [DataType(DataType.EmailAddress)]
         [Display(Name = "Email")]
-        public required string Email { get; set; }
+        public string Email { get; set; }
 
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace GM.Blog.BLL.ViewModels.Users.Request
         [Required(ErrorMessage = "Не указана дата рождения")]
         [DataType(DataType.DateTime)]
         [Display(Name = "Дата рождения")]
-        public required DateTime BirthDate { get; set; }
+        public DateTime BirthDate { get; set; }
 
         /// <summary>
         /// Пароль пользователя
@@ -52,7 +52,7 @@ namespace GM.Blog.BLL.ViewModels.Users.Request
         [DataType(DataType.Password)]
         [Display(Name = "Пароль")]
         [StringLength(30, ErrorMessage = "{0} - Минимальная длина пароля: {1}, Максимальная: {2}", MinimumLength = 8)]
-        public required string Password { get; set; }
+        public string Password { get; set; }
 
         /// <summary>
         /// Повторный ввод пароля. Должен совпадать с Password
@@ -61,6 +61,6 @@ namespace GM.Blog.BLL.ViewModels.Users.Request
         [Compare("Password", ErrorMessage = "Пароли не совпадают!")]
         [DataType(DataType.Password)]
         [Display(Name = "Подтвердить пароль")]
-        public required string PasswordConfirm { get; set; }
+        public string PasswordConfirm { get; set; }
     }
 }

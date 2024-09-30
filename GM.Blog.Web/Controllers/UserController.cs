@@ -1,13 +1,12 @@
 ﻿using AutoMapper;
-using Azure.Core;
+using GM.Blog.BLL.Extensions;
+using GM.Blog.BLL.Services.Interfaces;
 using GM.Blog.BLL.ViewModels.Users.Request;
-using GM.Blog.BLL.ViewModels.Users.Response;
 using GM.Blog.DAL.Entityes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace GM.Blog.Web.Controllers
 {
@@ -15,17 +14,18 @@ namespace GM.Blog.Web.Controllers
     {
         private readonly IMapper _mapper;
         private readonly ILogger<UserController> _logger;
+        private readonly IUserService _userService;
+        private readonly IRoleService _roleService;
         private readonly SignInManager<User> _signInManager;
-        private readonly UserManager<User> _userManager;
-        private readonly RoleManager<Role> _roleManager;
 
-        public UserController(IMapper mapper, ILogger<UserController> logger, SignInManager<User> signInManager, UserManager<User> userManager, RoleManager<Role> roleManager)
+        public UserController(IMapper mapper, ILogger<UserController> logger, IUserService userService, IRoleService roleService ,SignInManager<User> signInManager)
         {
             _mapper = mapper;
             _logger = logger;
+            _userService = userService;
+            _roleService = roleService;
             _signInManager = signInManager;
-            _userManager = userManager;
-            _roleManager = roleManager;
+            logger.LogInformation(nameof(UserController));
         }
 
 
@@ -42,41 +42,22 @@ namespace GM.Blog.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = _mapper.Map<User>(model);
-
-                var defaultRole = await _roleManager.FindByNameAsync("User");
-
-                user.Roles ??= new List<Role>();
-
-                user.Roles.Add(defaultRole);
-
-                // добавляем пользователя
-                var result = await _userManager.CreateAsync(user, model.Password);
-                if (result.Succeeded)
+                var result = await _userService.CreateUserAsync(model);
+                if (result.Success!.Succeeded)
                 {
-                    // установка куки
-                    await _signInManager.SignInAsync(user, false);
+                    await _signInManager.SignInWithClaimsAsync(result.User, false, await _userService.GetUserClaimsAsync(result.User).ToListAsync());
 
-                    var userId = await _userManager.GetUserIdAsync(user);
-                    var claims = new List<Claim>();
-
-                    foreach (var role in user.Roles)
-                        claims.Add(new Claim(ClaimsIdentity.DefaultRoleClaimType, role.Name!));
-                    claims.Add(new Claim("UserID", userId));
-
-                    await _signInManager.SignInWithClaimsAsync(user, false, claims);
-
-                    HttpContext.Session.SetString("username", user!.UserName ?? "");
+                    HttpContext.Session.SetString("username", result.User!.UserName ?? "");
 
                     return RedirectToAction("Index", "Home");
-
                 }
                 else
-                    foreach (var error in result.Errors)
+                    foreach (var error in result.Success.Errors)
                     {
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
             }
+
             return View(model);
         }
 
@@ -96,24 +77,18 @@ namespace GM.Blog.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Email == model.UserEmail);
-                if(user != null)
+                var user = await _userService.CheckDataForLoginAsync(model);
+                if (user != null)
                 {
                     var result = await _signInManager.CheckPasswordSignInAsync(user!, model.Password, false);
                     if (result.Succeeded)
                     {
-                        var userId = await _userManager.GetUserIdAsync(user);
-                        var claims = new List<Claim>();
-
-                        foreach (var role in user.Roles)
-                            claims.Add(new Claim(ClaimsIdentity.DefaultRoleClaimType, role.Name!));
-                        claims.Add(new Claim("UserID", userId));
-
+                        var claims = await _userService.GetUserClaimsAsync(user!).ToListAsync();
                         await _signInManager.SignInWithClaimsAsync(user!, false, claims);
 
                         HttpContext.Session.SetString("username", user!.UserName ?? "");
 
-                        var claimsId = claims.FirstOrDefault(c => c.Type == "UserID")?.Value;
+                        var userId = claims.FirstOrDefault(c => c.Type == "UserID")?.Value;
                         if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl) && userId == Request.Query["UserId"])
                             return Redirect(model.ReturnUrl);
                         return RedirectToAction("Index", "Home");
@@ -124,9 +99,7 @@ namespace GM.Blog.Web.Controllers
                 else
                     ModelState.AddModelError(string.Empty, "Неверный email или(и) пароль!");
             }
-
             return View(model);
-
         }
 
         /// <summary>Выход пользователя из системы </summary>
@@ -148,57 +121,33 @@ namespace GM.Blog.Web.Controllers
         [Route("GetUsers/{roleId?}")]
         public async Task<IActionResult> GetUsers([FromRoute] Guid? roleId)
         {
-            var users = _userManager.Users.ToList();
-            var model = new UsersViewModel
-            {
-                Users = await _userManager.Users.Include(u => u.Roles).ToListAsync()
-            };
-
-            if (roleId != null)
-                model.Users = model.Users
-                    .SelectMany(u => u.Roles, (u, r) => new { User = u, RoleId = r.Id })
-                    .Where(o => o.RoleId == roleId).Select(o => o.User).ToList();
-
+            var model = await _userService.GetUsersAsync(roleId);
             return View(model);
         }
 
         /// <summary> Страница регистрации пользователя</summary>
         [HttpGet]
-        public IActionResult Create() => View();
+        public async Task<IActionResult> Create() => View(new UserCreateViewModel(await _roleService.GetAllRolesAsync().ToListAsync()));
 
 
         /// <summary>
         /// Регистрация пользователя
         /// </summary>
         [HttpPost]
-        public async Task<IActionResult> Create(UserRegisterViewModel model)
+        public async Task<IActionResult> Create(UserCreateViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var user = _mapper.Map<User>(model);
+                model.Roles = (await _roleService.GetEnabledRoleNamesWithRequest(this.Request).ToListAsync()).Select(r => r.Name!).ToList();
+                var result = await _userService.CreateUserAsync(model, await _roleService.ConvertRoleNamesInRoles(model.Roles).ToListAsync());
 
-                var defaultRole = await _roleManager.FindByNameAsync("User");
-
-                user.Roles ??= new List<Role>();
-
-                user.Roles.Add(defaultRole);
-
-                // добавляем пользователя
-                var result = await _userManager.CreateAsync(user, model.Password);
-                if (result.Succeeded)
-                {
-                    // установка куки
-                    await _signInManager.SignInAsync(user, false);
-
-                    return RedirectToAction("Index", "Home");
-
-                }
+                if (result.Success.Succeeded)
+                    return RedirectToAction("GetUsers");
                 else
-                    foreach (var error in result.Errors)
-                    {
-                        ModelState.AddModelError(string.Empty, error.Description);
-                    }
+                    ModelState.AddModelError(string.Empty, $"Произошла ошибка при создании пользователя!");
             }
+
+            model.AllRoles ??= (await _roleService.GetAllRolesAsync().ToListAsync()).Select(r => r.Name!).ToList();
             return View(model);
         }
 
@@ -210,11 +159,8 @@ namespace GM.Blog.Web.Controllers
         [Route("ViewUser/{id}")]
         public async Task<IActionResult> View([FromRoute] Guid id)
         {
-            var user = await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == id);
-
-            var model = _mapper.Map<UserViewModel>(user);
-
-             if (model == null) return NotFound();
+            var model = await _userService.GetUserAsync(id);
+            if (model == null) return NotFound();
 
             return View(model);
         }
@@ -226,20 +172,12 @@ namespace GM.Blog.Web.Controllers
         [Route("EditUser/{id?}")]
         public async Task<IActionResult> Edit([FromRoute] Guid id)
         {
-           var user = await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == id);
-
-            if (user == null) return new NotFoundResult();
-
             var userId = User.Claims.FirstOrDefault(c => c.Type == "UserID")?.Value;
+            var result = await _userService.GetUserEditAsync(id, userId, User.IsInRole("Admin"));
 
-            if(User.IsInRole("Admin")|| user.Id.ToString()== userId)
-            {
-                var model = _mapper.Map<UserEditViewModel>(user);
-                model.AllRoles = (await _roleManager.Roles.ToListAsync()).Select(r=>r.Name!).ToList();
-                return View(model);
-            }
-            return Forbid();
+            if (result.Model == null) return result.Result!;
 
+            return View(result.Model);
         }
 
         /// <summary>Редактирование пользователя</summary>
@@ -250,52 +188,18 @@ namespace GM.Blog.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var roles = new List<Role>();
-                foreach (var pair in this.Request.Form)
-                {
-                    if (pair.Value == "on")
-                    {
-                        var role = await _roleManager.FindByNameAsync(pair.Key);
-                        if (role != null)
-                        {
-                            roles.Add(role);
-                        }
-                           
-                    }
-                }
+                model.Roles = (await _roleService.GetEnabledRoleNamesWithRequest(this.Request).ToListAsync()).Select(r => r.Name!).ToList();
+                var result = await _userService.UpdateUserAsync(model);
 
-                var user= await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == model.Id);
-                //var user = await _userManager.FindByIdAsync(model.Id.ToString());
-               
-                if (user == null)
-                    return new NotFoundResult();
-                
-                _mapper.Map(model, user);
-
-                if(roles.Count!=0)
-                    user.Roles=roles.Distinct().ToList();
-
-                //var roleUser = await _roleManager.FindByNameAsync("User");
-                 //var roleAdmin = await _roleManager.FindByNameAsync("Moderator");
-               // var roleAdmin = await _roleManager.FindByNameAsync("Admin");
-               //user.Roles.Add(roleUser);
-               // user.Roles.Add(roleAdmin);
-                var result = await _userManager.UpdateAsync(user);
-
-                if (result.Succeeded)
-                {
-                    var updateSecurityStampRes = await _userManager.UpdateSecurityStampAsync(user);
+                if (result)
                     return RedirectToAction("Index", "Home", new { model.ReturnUrl });
-                }             
                 else
-                    foreach (var error in result.Errors)
-                        ModelState.AddModelError(string.Empty, error.Description);
+                    ModelState.AddModelError(string.Empty, $"Произошла ошибка при обновлении пользователя!");
             }
-            model.Roles ??= (await _roleManager.Roles.Include(r => r.Users)
-                .SelectMany(r => r.Users, (r, u) => new { Role = r, UserId = u.Id })
-                .Where(o => o.UserId == model.Id).Select(o => o.Role).ToListAsync()).Select(r=>r.Name).ToList();
 
-            model.AllRoles ??= (await _roleManager.Roles.ToListAsync()).Select(r => r.Name!).ToList();
+            model.Roles ??= (await _roleService.GetRolesByUserAsync(model.Id).ToListAsync()).Select(r => r.Name!).ToList();
+            model.AllRoles ??= (await _roleService.GetAllRolesAsync().ToListAsync()).Select(r => r.Name!).ToList();
+
             return View(model);
         }
 
@@ -303,13 +207,8 @@ namespace GM.Blog.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Remove(Guid id, [FromForm] Guid? userId)
         {
-            var user = await _userManager.FindByIdAsync(id.ToString());
-            if (user == null)
-                return new NotFoundResult();
-
-            var result = await _userManager.DeleteAsync(user);
-
-           if (!result.Succeeded) return BadRequest();
+            var result = await _userService.DeleteByIdAsync(id, userId, User.IsInRole("Admin"));
+            if (!result) return BadRequest();
 
             if (User.IsInRole("Admin"))
                 return RedirectToAction("GetUsers");
