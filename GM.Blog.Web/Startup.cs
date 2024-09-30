@@ -5,6 +5,7 @@ using GM.Blog.DAL.Context;
 using GM.Blog.DAL.Entityes;
 using Microsoft.AspNetCore.Http.Extensions;
 using GM.Blog.BLL.Extensions;
+using GM.Blog.Web.Extensions;
 
 namespace GM.Blog.Web
 {
@@ -119,6 +120,8 @@ namespace GM.Blog.Web
             app.UseAuthorization();
             app.UseSession();
 
+            app.UseCustomExceptionHandler();
+            app.UseFollowLogging();
 
             //Добавляем компонент с настройкой маршрутов для главной страницы
             app.UseEndpoints(endpoints =>
