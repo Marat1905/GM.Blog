@@ -4,6 +4,7 @@ using GM.Blog.BLL;
 using GM.Blog.DAL.Context;
 using GM.Blog.DAL.Entityes;
 using Microsoft.AspNetCore.Http.Extensions;
+using GM.Blog.BLL.Extensions;
 
 namespace GM.Blog.Web
 {
@@ -37,6 +38,8 @@ namespace GM.Blog.Web
             services.AddDatabase(_configuration.GetSection("Database"));
 
             var t = _configuration.GetConnectionString("Data Source=..\\DAL\\GM.Blog.DAL\\Database\\Blog.db");
+
+            services.AddAppServices();
 
             services.AddControllersWithViews();
             services.AddRazorPages();

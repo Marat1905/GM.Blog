@@ -1,41 +1,26 @@
-﻿using AutoMapper;
+﻿using GM.Blog.BLL.Services.Interfaces;
 using GM.Blog.BLL.ViewModels.Roles.Request;
-using GM.Blog.BLL.ViewModels.Roles.Response;
-using GM.Blog.DAL.Entityes;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GM.Blog.Web.Controllers
 {
     public class RoleController : Controller
     {
-        private readonly RoleManager<Role> _roleManager;
-        private readonly UserManager<User> _userManager;
-        private readonly IMapper _mapper;
+        private readonly IRoleService _roleService;
 
-        public RoleController(RoleManager<Role> roleManager, UserManager<User> userManager, IMapper mapper)
+        public RoleController(IRoleService roleService)
         {
-            _roleManager = roleManager;
-            _userManager = userManager;
-            _mapper = mapper;
+            _roleService = roleService;
         }
 
-        /// <summary>Страница отображения всех ролей (получение ролей указанного пользователя) </summary>
+        /// <summary>Страница отображения всех ролей пользователя </summary>
         [HttpGet]
         [Route("GetRoles/{userId?}")]
         public async Task<IActionResult> GetRoles([FromRoute] Guid? userId)
         {
-            var model = new RolesViewModel();
-            if (userId == null)
-                model.Roles = await _roleManager.Roles.ToListAsync();
-            else
-            {
-                var user = await _userManager.Users.Include(u => u.Roles)
-                  .FirstOrDefaultAsync(u => u.Id == userId);
-                if (user == null) return NotFound();
-                model.Roles = user.Roles;
-            }
+            var model = await _roleService.GetRolesAsync(userId);
+            if (model == null) return NotFound();
+
             return View(model);
         }
 
@@ -51,17 +36,20 @@ namespace GM.Blog.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var role = _mapper.Map<Role>(model);
-                var result = await _roleManager.CreateAsync(role);
-
-                if (result.Succeeded)
-                    return RedirectToAction("GetRoles");
+                var check = await _roleService.CheckRoleAsync(model.Name);
+                if (string.IsNullOrEmpty(check))
+                {
+                    var result = await _roleService.CreateRoleAsync(model);
+                    if (result.Succeeded)
+                        return RedirectToAction("GetRoles");
+                    else
+                        foreach (var error in result.Errors)
+                        {
+                            ModelState.AddModelError(string.Empty, error.Description);
+                        }
+                }
                 else
-                    foreach (var error in result.Errors)
-                    {
-                        ModelState.AddModelError(string.Empty, error.Description);
-                    }
-
+                    ModelState.AddModelError(string.Empty, check);
             }
             else
                 ModelState.AddModelError(string.Empty, $"Ошибка! Не удалось создать роль!");
@@ -75,10 +63,8 @@ namespace GM.Blog.Web.Controllers
         [Route("EditRole")]
         public async Task<IActionResult> Edit(Guid id)
         {
-            var role = await _roleManager.FindByIdAsync(id.ToString());
-            if (role == null) return NotFound();
-
-            var model=_mapper.Map<RoleEditViewModel>(role);
+            var model = await _roleService.GetRoleEditAsync(id);
+            if (model == null) return NotFound();
 
             return View(model);
         }
@@ -90,21 +76,24 @@ namespace GM.Blog.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var role = await _roleManager.FindByIdAsync(model.Id.ToString());
-                if (role != null)
+                var check = await _roleService.CheckRoleAsync(model.Name);
+                if (string.IsNullOrEmpty(check))
                 {
-                    _mapper.Map(model, role);
-
-                    var result = await _roleManager.UpdateAsync(role);
-                    if(result.Succeeded)
+                    var result = await _roleService.UpdateRoleAsync(model);
+                    if (result.Succeeded)
                         return RedirectToAction("GetRoles");
                     else
                         foreach (var error in result.Errors)
+                        {
                             ModelState.AddModelError(string.Empty, error.Description);
+                        }
                 }
                 else
-                    ModelState.AddModelError(string.Empty, $"Ошибка! ");
+                    ModelState.AddModelError(string.Empty, check);
             }
+            else
+                ModelState.AddModelError(string.Empty, $"Ошибка! Не удалось создать роль!");
+
             return View(model);
         }
 
@@ -112,11 +101,7 @@ namespace GM.Blog.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var role = await _roleManager.FindByIdAsync(id.ToString());
-            if (role == null) return NotFound();
-
-            var result = await _roleManager.DeleteAsync(role);
-
+            var result = await _roleService.DeleteRoleAsync(id);
             if (!result.Succeeded) return BadRequest();
 
             return RedirectToAction("GetRoles");
@@ -127,10 +112,8 @@ namespace GM.Blog.Web.Controllers
         [Route("/ViewRole/{id}")]
         public async Task<IActionResult> View([FromRoute] Guid id)
         {
-            var role = await _roleManager.FindByIdAsync(id.ToString());
-            if (role == null) return NotFound();
-
-            var model =_mapper.Map<RoleViewModel>(role);
+            var model = await _roleService.GetRoleAsync(id);
+            if (model == null) return NotFound();
 
             return View(model);
         }
