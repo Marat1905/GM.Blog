@@ -1,34 +1,27 @@
 ﻿using AutoMapper;
+using GM.Blog.BLL.Services.Interfaces;
 using GM.Blog.BLL.ViewModels.Comments.Request;
 using GM.Blog.BLL.ViewModels.Comments.Response;
 using GM.Blog.BLL.ViewModels.Posts.Response;
 using GM.Blog.DAL.Entityes;
-using GM.Blog.DAL.Interfaces;
-using GM.Blog.DAL.Repository;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.IO;
 
 namespace GM.Blog.Web.Controllers
 {
     /// <summary> Контроллер комментариев</summary>
     public class CommentController : Controller
     {
-        private readonly IMapper _mapper;
         private readonly ILogger<CommentController> _logger;
-        private readonly IRepository<Comment> _commentRepository;
-        private readonly UserManager<User> _userManager;
-        private readonly IRepository<Post> _postRepository;
+        private readonly ICommentService _commentService;
+        private readonly IPostService _postService;
 
-        public CommentController(IMapper mapper, ILogger<CommentController> logger, IRepository<Comment> commentRepository, UserManager<User> userManager, IRepository<Post> postRepository)
+        public CommentController(ILogger<CommentController> logger,ICommentService commentService, IPostService postService)
         {
-            _mapper = mapper;
+
             _logger = logger;
-            _commentRepository = commentRepository;
-            _userManager = userManager;
-            _postRepository = postRepository;
+            _commentService = commentService;
+            _postService = postService;
         }
         /// <summary> Создание комментария</summary>
         [HttpPost]
@@ -37,65 +30,28 @@ namespace GM.Blog.Web.Controllers
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == "UserID")?.Value;
 
-            if (ModelState.IsValid)
-            {
-                var user = await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == model.UserId);
-                if (user == null) return new NotFoundResult();
+            if (!ModelState.IsValid)
+                return await GetPostViewModel(model,userId);
 
-                var post = await _postRepository.GetAsync(model.PostId);
-                if (post == null) return new NotFoundResult();
 
-                var comment = _mapper.Map<Comment>(model);
-                comment.Post = post;
-                comment.User = user;
-
-                await _commentRepository.AddAsync(comment);
-
+            var result = await _commentService.CreateCommentAsync(model);
+            if (result)
                 return RedirectToAction("View", "Post", new { Id = model.PostId, UserId = userId });
-            }
             else
             {
                 ModelState.AddModelError(string.Empty, $"Ошибка! Не удалось создать комментарий!");
-
-                var post = await _postRepository.GetAsync(model.PostId);
-                var user = await _userManager.FindByIdAsync(userId ?? string.Empty);
-
-                if (post == null || user == null) return NotFound();
-
-                if (!post.Users.Contains(user))
-                {
-                    post.Users.Add(user);
-                    await _postRepository.UpdateAsync(post);
-                }
-
-               var postViewModel = _mapper.Map<PostViewModel>(post);
-                postViewModel.CommentCreateViewModel = new CommentCreateViewModel { PostId = model.PostId };
-
-                if (postViewModel == null) return NotFound();
-
-                postViewModel.CommentCreateViewModel = model;
-                return View("/Views/Post/View.cshtml", postViewModel);
+                return await GetPostViewModel(model, userId);
             }
         }
 
+       
 
         /// <summary> Страница всех комментариев (получение комментариев для указанной статьи) </summary>
         [HttpGet]
         [Route("GetComments/{postId?}")]
         public async Task<IActionResult> GetComments([FromRoute] Guid? postId, [FromQuery] Guid? userId)
         {
-            var model = new CommentsViewModel();
-
-            if (postId == null && userId == null)
-                model.Comments = await _commentRepository.Items.ToListAsync();
-            else if (postId != null && userId == null)
-                model.Comments = await _commentRepository.Items.Where(c=>c.PostId==postId).ToListAsync();
-            else if (postId == null && userId != null)
-                model.Comments = await _commentRepository.Items.Where(c => c.UserId == userId).ToListAsync();
-            else
-                model.Comments = (await _commentRepository.Items.Where(c => c.PostId == postId).ToListAsync())
-                    .Where(c => c.UserId == userId!).ToList();
-
+            var model = await _commentService.GetCommentsAsync(postId, userId);
             if (model == null) return NotFound();
 
             return View(model);
@@ -108,15 +64,11 @@ namespace GM.Blog.Web.Controllers
             var userId = User.Claims.FirstOrDefault(c => c.Type == "UserID")?.Value;
             var fullAccess = User.IsInRole("Admin") || User.IsInRole("Moderator");
 
-            var comment = await _commentRepository.GetAsync(id);
-            if (comment == null) return  new NotFoundResult();
+            var result = await _commentService.GetCommentEditAsync(id, userId, fullAccess);
 
-            if (!(fullAccess || comment.UserId.ToString() == userId))
-                return new ForbidResult();
+            if (result.Model == null) return result.Result!;
 
-            var model = _mapper.Map<CommentEditViewModel>(comment);
-
-            return View(model);
+            return View(result.Model);
         }
 
         /// <summary>
@@ -127,11 +79,9 @@ namespace GM.Blog.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                var currentComment = await _commentRepository.GetAsync(model.Id);
-                if (currentComment != null)
+                var result = await _commentService.UpdateCommentAsync(model);
+                if (result)
                 {
-                    _mapper.Map(model, currentComment);
-                    await _commentRepository.UpdateAsync(currentComment);
                     if (model.ReturnUrl != null && Url.IsLocalUrl(model.ReturnUrl))
                         return Redirect(model.ReturnUrl);
                     return RedirectToAction("GetComments");
@@ -139,8 +89,6 @@ namespace GM.Blog.Web.Controllers
                 else
                     ModelState.AddModelError(string.Empty, $"Ошибка! Не удалось обновить комментарий!");
             }
-            else
-                ModelState.AddModelError(string.Empty, $"Ошибка! Не удалось обновить комментарий!");
 
             return View(model);
         }
@@ -150,19 +98,25 @@ namespace GM.Blog.Web.Controllers
         public async Task<IActionResult> Remove([FromRoute] Guid id, [FromForm] Guid? userId, string? returnUrl)
         {
             var access = User.IsInRole("Admin") || User.IsInRole("Moderator");
+            var result= await _commentService.DeleteCommentAsync(id, userId, access);
 
-            var deletedComment = await _commentRepository.GetAsync(id);
-            if (deletedComment == null) return new NotFoundResult();
-
-
-            if (access || deletedComment.UserId == userId)
-                await _commentRepository.RemoveAsync(deletedComment!);
+            if(result==null) 
+            {
+                if (returnUrl != null && Url.IsLocalUrl(returnUrl))
+                    return Redirect(returnUrl + $"?userId={userId}");
+                return RedirectToAction("GetComments");
+            }
             else
-                return new ForbidResult();
+                return result;
+        }
 
-            if (returnUrl != null && Url.IsLocalUrl(returnUrl))
-                return Redirect(returnUrl + $"?userId={userId}");
-            return RedirectToAction("GetComments");
+        async Task<IActionResult> GetPostViewModel(CommentCreateViewModel model, string userId)
+        {
+            var postViewModel = await _postService.GetPostAsync(model.PostId, userId ?? string.Empty);
+            if (postViewModel == null) return NotFound();
+
+            postViewModel.CommentCreateViewModel = model;
+            return View("/Views/Post/View.cshtml", postViewModel);
         }
     }
 }
