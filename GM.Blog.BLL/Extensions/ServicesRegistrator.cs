@@ -10,6 +10,9 @@ namespace GM.Blog.BLL.Extensions
         public static IServiceCollection AddAppServices(this IServiceCollection services) => services
             .AddScoped<IUserService, UserService>()
             .AddScoped<IRoleService, RoleService>()
+            .AddScoped<ITagService, TagService>()
+            .AddScoped<ICommentService, CommentService>()
+            .AddScoped<IPostService, PostService>()
             ;
     }
 }

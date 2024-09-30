@@ -1,28 +1,19 @@
-﻿using AutoMapper;
-using Azure;
+﻿using GM.Blog.BLL.Services.Interfaces;
 using GM.Blog.BLL.ViewModels.Tags.Request;
-using GM.Blog.BLL.ViewModels.Tags.Response;
-using GM.Blog.DAL.Entityes;
-using GM.Blog.DAL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 
 namespace GM.Blog.Web.Controllers
 {
     public class TagController : Controller
     {
-        private readonly IMapper _mapper;
         private readonly ILogger<TagController> _logger;
-        private readonly IRepository<Tag> _tagRepository;
+        private readonly ITagService _tagService;
 
-        public TagController(IMapper mapper, ILogger<TagController> logger, IRepository<Tag> tagRepository)
+        public TagController(ILogger<TagController> logger,ITagService tagService )
         {
-            _mapper = mapper;
             _logger = logger;
-            _tagRepository = tagRepository;
+            _tagService = tagService;
         }
         public IActionResult Index()
         {
@@ -32,6 +23,7 @@ namespace GM.Blog.Web.Controllers
         /// <summary>
         /// Страница создания тега
         /// </summary>
+        [Authorize]
         [HttpGet]
         [Route("CreateTag")]
         public IActionResult Create() => View();
@@ -39,16 +31,24 @@ namespace GM.Blog.Web.Controllers
         /// <summary>
         /// Создание тега
         /// </summary>
+        [Authorize]
         [HttpPost]
         [Route("CreateTag")]
         public async Task<IActionResult> Create(TagCreateViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var tag = _mapper.Map<Tag>(model);
-                if (!_tagRepository.Items.Any(x=>x.Name== model.Name))
-                    await _tagRepository.AddAsync(tag);
-                return RedirectToAction("GetTags");
+                var check = await _tagService.CheckTagNameAsync(model.Name);
+                if (string.IsNullOrEmpty(check))
+                {
+                    var result = await _tagService.CreateTagAsync(model);
+                    if (result)
+                        return RedirectToAction("GetTags");
+                    else
+                        ModelState.AddModelError(string.Empty, $"Ошибка! Не удалось создать тег!");
+                }
+                else
+                    ModelState.AddModelError(string.Empty,check );       
             }
             return View(model);
         }
@@ -56,31 +56,12 @@ namespace GM.Blog.Web.Controllers
         /// <summary>
         /// Страница всех тегов (получение тегов для указанной статьи, получение указанного тега)
         /// </summary>
+        [Authorize]
         [HttpGet]
         [Route("GetTags/{id?}")]
         public async Task<IActionResult> GetTags([FromRoute] Guid? id, [FromQuery] Guid? postId)
         {
-            var model = new TagsViewModel();
-
-            if (id == null)
-            {
-                model.Tags = postId == null
-                    ? await _tagRepository.Items.ToListAsync()
-                    : await _tagRepository.Items
-                                            .SelectMany(t => t.Posts, (t, p) => new { Tag = t, PostId = p.Id })
-                                            .Where(o => o.PostId == postId)
-                                            .Select(o => o.Tag).ToListAsync();
-            }
-            else
-            {
-                var tag = postId == null 
-                    ?  _tagRepository.Get( id ?? Guid.Empty) 
-                    : await (_tagRepository.Items
-                                            .SelectMany(t => t.Posts, (t, p) => new { Tag = t, PostId = p.Id })
-                                            .Where(o => o.PostId == postId)
-                                            .Select(o => o.Tag)).FirstOrDefaultAsync(t=>t.Id==id);
-                if (tag != null) { model.Tags.Add(tag); };
-            }
+            var model = await _tagService.GetTagsAsync(id, postId);
             return View(model);
         }
 
@@ -88,12 +69,10 @@ namespace GM.Blog.Web.Controllers
         /// Страница редактирования тега
         /// </summary>
         [HttpGet]
+        [Authorize(Roles = "Admin, Moderator")]
         public async Task<IActionResult> Edit([FromRoute] Guid id)
         {
-            var tag = await _tagRepository.GetAsync(id);
-
-            var model = tag == null ? null : _mapper.Map<TagEditViewModel>(tag);
-
+            var model = await _tagService.GetTagEditAsync(id);
             if (model == null) return NotFound();
 
             return View(model);
@@ -102,20 +81,23 @@ namespace GM.Blog.Web.Controllers
         /// <summary>
         /// Редактирование тега
         /// </summary>
+        [Authorize(Roles = "Admin, Moderator")]
         [HttpPost]
         public async Task<IActionResult> Edit(TagEditViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var currentTag = await _tagRepository.GetAsync(model.Id);
-                if (currentTag == null) return NotFound();
-
-                _mapper.Map(model, currentTag);
-
-                await _tagRepository.UpdateAsync(currentTag);
-
-                return RedirectToAction("GetTags");
-
+                var check = await _tagService.CheckTagNameAsync(model.Name);
+                if (string.IsNullOrEmpty(check))
+                {
+                    var result = await _tagService.UpdateTagAsync(model);
+                    if (result)
+                        return RedirectToAction("GetTags");
+                    else
+                        ModelState.AddModelError(string.Empty, $"Ошибка! Не удалось обновить тег!");
+                }
+                else
+                    ModelState.AddModelError(string.Empty, check);
             }
             else
                 ModelState.AddModelError(string.Empty, $"Ошибка! Не удалось обновить тег!");
@@ -126,13 +108,12 @@ namespace GM.Blog.Web.Controllers
         /// <summary>
         /// Удаление тега
         /// </summary>
+        [Authorize(Roles = "Admin, Moderator")]
         [HttpPost]
         public async Task<IActionResult> Remove(Guid id)
         {
-            var currentTag = await _tagRepository.GetAsync(id);
-            if (currentTag == null) return NotFound();
-
-            await _tagRepository.RemoveAsync(currentTag);;
+            var result = await _tagService.DeleteTagAsync(id);
+            if (!result) return BadRequest();
 
             return RedirectToAction("GetTags");
         }
@@ -140,15 +121,11 @@ namespace GM.Blog.Web.Controllers
         /// <summary>
         /// Страница отображения указанного тега
         /// </summary>
+        [Authorize(Roles = "Admin, Moderator")]
         [HttpGet]
         public async Task<IActionResult> View([FromRoute] Guid id)
         {
-            var tag = await _tagRepository.GetAsync(id);
-
-            if (tag == null) return NotFound();
-
-            var model = _mapper.Map<TagViewModel>(tag);
-
+            var model = await _tagService.GetTagAsync(id);
             if (model == null) return NotFound();
 
             return View(model);
