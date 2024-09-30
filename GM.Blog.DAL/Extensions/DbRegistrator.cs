@@ -1,15 +1,17 @@
 ﻿using GM.Blog.DAL.Context;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using GM.Blog.DAL.Service;
 
-namespace GM.Blog.Web.Extensions
+namespace GM.Blog.DAL.Extensions
 {
-    public static  class DbRegistrator
+    public static class DbRegistrator
     {
         public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration Configuration) => services
            .AddDbContext<BlogContext>(opt =>
            {
-               
+
                var type = Configuration["Type"];
 
                var t = Configuration.GetConnectionString(type);
@@ -28,7 +30,7 @@ namespace GM.Blog.Web.Extensions
                                         );
                        break;
                    case "SQLite":
-                       opt.UseSqlite(Configuration.GetConnectionString(type), b=> b.MigrationsAssembly("GM.Blog.DAL"));
+                       opt.UseSqlite(Configuration.GetConnectionString(type), b => b.MigrationsAssembly("GM.Blog.DAL"));
                        break;
                };
                opt.EnableSensitiveDataLogging(false);

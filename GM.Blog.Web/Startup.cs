@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using GM.Blog.Web.Extensions;
 using GM.Blog.BLL;
+using GM.Blog.DAL.Extensions;
 using GM.Blog.DAL.Context;
 using GM.Blog.DAL.Entityes;
 using Microsoft.AspNetCore.Http.Extensions;
