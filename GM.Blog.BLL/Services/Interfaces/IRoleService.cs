@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity;
 namespace GM.Blog.BLL.Services.Interfaces
 {
     /// <summary>
-    /// Интерфейс сервисов сущности ролей
+    /// Интерфейс сервисов ролей
     /// </summary>
     public interface IRoleService
     {
