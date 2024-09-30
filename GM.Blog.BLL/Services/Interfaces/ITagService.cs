@@ -1,5 +1,6 @@
 ﻿using GM.Blog.BLL.ViewModels.Tags.Request;
 using GM.Blog.BLL.ViewModels.Tags.Response;
+using GM.Blog.DAL.Entityes;
 
 namespace GM.Blog.BLL.Services.Interfaces
 {
@@ -58,5 +59,17 @@ namespace GM.Blog.BLL.Services.Interfaces
         /// <param name="name">Имя тега</param>
         /// <returns></returns>
         Task<string?> CheckTagNameAsync(string name);
+
+        /// <summary>
+        /// Присвоение тегов посту
+        /// </summary>
+        /// <param name="postTags"></param>
+        /// <returns></returns>
+        IAsyncEnumerable<Tag> SetTagsForPostAsync(string? postTags);
+
+        /// <summary>
+        /// Получение списка всех тегов
+        /// </summary>
+        IAsyncEnumerable<Tag> GetAllTagsAsync();
     }
 }

@@ -6,6 +6,9 @@ using GM.Blog.DAL.Entityes;
 using GM.Blog.DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace GM.Blog.BLL.Services
 {
@@ -103,5 +106,22 @@ namespace GM.Blog.BLL.Services
                 return $"Тег с именем [{name}] уже существует!";
             else return null;
         }
+
+        public async IAsyncEnumerable<Tag> SetTagsForPostAsync(string? postTags)
+        {
+            if (postTags != null)
+            {
+                var tagSet = Regex.Replace(postTags, @"\s+", " ").Trim().Split(" ");
+
+                foreach (var tagName in tagSet)
+                {
+                    var tag = await _tagRepository.Items.Include(t => t.Posts).FirstOrDefaultAsync(t => t.Name == tagName);
+                    if (tag != null) 
+                        yield return tag;
+                }
+            }
+        }
+
+        public IAsyncEnumerable<Tag> GetAllTagsAsync()=> _tagRepository.Items.Include(t => t.Posts).AsAsyncEnumerable();
     }
 }

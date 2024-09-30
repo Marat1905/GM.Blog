@@ -31,6 +31,9 @@ namespace GM.Blog.BLL.Services
             _logger = logger;
         }
 
+        public async Task<User?> GetUserByIdAsync(Guid id) =>
+            await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == id);
+
         public async Task<UserCreateResult> CreateUserAsync(UserRegisterViewModel model,ICollection<Role>? roles=null)
         {
             var user = _mapper.Map<User>(model);
@@ -137,6 +140,6 @@ namespace GM.Blog.BLL.Services
 
         public async Task<User?> CheckDataForLoginAsync(UserLoginViewModel model) => await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Email == model.UserEmail);
 
-      
+        
     }
 }

@@ -42,6 +42,13 @@ namespace GM.Blog.BLL.Services.Interfaces
         Task<UserViewModel?> GetUserAsync(Guid id);
 
         /// <summary>
+        /// Получение пользователя по идентификатору
+        /// </summary>
+        /// <param name="id">Идентификатор пользователя</param>
+        /// <returns></returns>
+        Task<User?> GetUserByIdAsync(Guid id);
+
+        /// <summary>
         /// Обновление пользователя
         /// </summary>
         /// <param name="model">Модель представления для редактирования пользователя</param>
