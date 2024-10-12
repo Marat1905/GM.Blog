@@ -140,6 +140,6 @@ namespace GM.Blog.BLL.Services
 
         public async Task<User?> CheckDataForLoginAsync(UserLoginViewModel model) => await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Email == model.UserEmail);
 
-        
+        public async Task<List<User>> GetAllUsersAsync() => await _userManager.Users.Include(u => u.Roles).ToListAsync();
     }
 }

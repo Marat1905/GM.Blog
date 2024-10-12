@@ -79,5 +79,9 @@ namespace GM.Blog.BLL.Services.Interfaces
         /// <returns>Возвращаем модель пользователя</returns>
         public Task<User?> CheckDataForLoginAsync(UserLoginViewModel model);
 
+        /// <summary>
+        /// Получение списка всех пользователей
+        /// </summary>
+        Task<List<User>> GetAllUsersAsync();
     }
 }
