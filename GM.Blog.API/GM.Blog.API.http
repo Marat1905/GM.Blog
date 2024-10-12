@@ -1,0 +1,6 @@
+@GM.Blog.API_HostAddress = http://localhost:5219
+
+GET {{GM.Blog.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
