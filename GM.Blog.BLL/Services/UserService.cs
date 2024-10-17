@@ -66,6 +66,12 @@ namespace GM.Blog.BLL.Services
             yield return new Claim("UserID", userId);
         }
 
+        public async Task<bool> DeleteByIdAsync(User user)
+        {
+            var result = await _userManager.DeleteAsync(user);
+            return result.Succeeded;
+        }
+
         public async Task<bool> DeleteByIdAsync(Guid id, Guid? userId, bool fullAccess)
         {
             var user = await _userManager.FindByIdAsync(id.ToString());
@@ -140,6 +146,35 @@ namespace GM.Blog.BLL.Services
 
         public async Task<User?> CheckDataForLoginAsync(UserLoginViewModel model) => await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Email == model.UserEmail);
 
-        public async Task<List<User>> GetAllUsersAsync() => await _userManager.Users.Include(u => u.Roles).ToListAsync();
+        public async Task<ICollection<User>> GetAllUsersAsync() => await _userManager.Users.Include(u => u.Roles).ToListAsync();
+
+        public async Task<ICollection<string>> CheckDataForCreateUserAsync(UserRegisterViewModel model)
+        {
+            var messages = new List<string>();
+
+            var checkEmail = (await _userManager.FindByEmailAsync(model.Email ?? ""))?.Email;
+            if (checkEmail != null)
+                messages.Add($"Почта {model.Email} уже зарегистрирована!");
+
+            return messages;
+        }
+
+        public async Task<UserEditApiResult> CheckDataForEditUserAsync(UserEditViewModel model)
+        {
+            var list = new List<string>();
+
+            var currentUser = await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == model.Id);
+            if (currentUser == null)
+            {
+                list.Add($"Пользователь не найден!");
+                return new(null, list);
+            }
+
+            var checkEmail = (await _userManager.FindByEmailAsync(model.Email ?? ""))?.Email;
+            if (checkEmail != null && checkEmail != currentUser.Email)
+                list.Add($"Адрес [{model.Email}] уже зарегистрирован!");
+
+            return new(currentUser, list);
+        }
     }
 }

@@ -64,6 +64,11 @@ namespace GM.Blog.BLL.Services.Interfaces
         /// <returns></returns>
         Task<bool> DeleteByIdAsync(Guid id, Guid? userId, bool fullAccess);
 
+        /// <summary>
+        /// Удаление пользователя
+        /// </summary>
+        Task<bool> DeleteByIdAsync(User user);
+
 
         /// <summary>
         /// Получение утверждений пользователя (роли, идентификатор)
@@ -80,8 +85,18 @@ namespace GM.Blog.BLL.Services.Interfaces
         public Task<User?> CheckDataForLoginAsync(UserLoginViewModel model);
 
         /// <summary>
+        /// Проверка данных полученных контроллером при создании пользователя
+        /// </summary>
+        Task<ICollection<string>> CheckDataForCreateUserAsync(UserRegisterViewModel model);
+
+        /// <summary>
+        /// Проверка данных полученных контроллером при редактировании пользователя (API)
+        /// </summary>
+        Task<UserEditApiResult> CheckDataForEditUserAsync(UserEditViewModel model);
+
+        /// <summary>
         /// Получение списка всех пользователей
         /// </summary>
-        Task<List<User>> GetAllUsersAsync();
+        Task<ICollection<User>> GetAllUsersAsync();
     }
 }
