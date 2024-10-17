@@ -26,6 +26,11 @@ namespace GM.Blog.BLL.Services.Interfaces
         IAsyncEnumerable<Role> GetRolesByUserAsync(Guid userId);
 
         /// <summary>
+        /// Получение роли по идентификатору
+        /// </summary>
+        Task<Role?> GetRoleByIdAsync(Guid id);
+
+        /// <summary>
         /// Получение списка всех ролей
         /// </summary>
         IAsyncEnumerable<Role> GetAllRolesAsync();
@@ -92,5 +97,13 @@ namespace GM.Blog.BLL.Services.Interfaces
         /// <param name="name">Имя роли</param>
         /// <returns></returns>
         Task<string> CheckRoleAsync(string name);
+
+        /// <summary>
+        /// Проверка корректности переданных ролей в модели обновления пользователя
+        /// </summary>
+        Task<ICollection<string>> CheckRolesForUserChanged(ICollection<string> roleNames);
+
+
+
     }
 }

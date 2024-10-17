@@ -43,6 +43,8 @@ namespace GM.Blog.BLL.Services
             return model;
         }
 
+        public async Task<Role?> GetRoleByIdAsync(Guid id) => await _roleManager.FindByIdAsync(id.ToString());
+
         public async Task<RoleViewModel?> GetRoleAsync(Guid id)
         {
             var role = await _roleManager.FindByIdAsync(id.ToString());
@@ -133,5 +135,25 @@ namespace GM.Blog.BLL.Services
 
             return string.Empty;
         }
+
+        public async Task<ICollection<string>> CheckRolesForUserChanged(ICollection<string> roleNames)
+        {
+            var messages = new List<string>();
+
+            if (!roleNames.Contains("User"))
+            {
+                messages.Add("Список ролей не содержит обязательных ролей!");
+                return messages;
+            }
+
+            foreach (var role in roleNames)
+            {
+                if (await _roleManager.FindByNameAsync(role ?? "") == null)
+                    messages.Add($"Роль [{role}] не найдена!");
+            }
+
+            return messages;
+        }
+
     }
 }
