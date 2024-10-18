@@ -73,7 +73,7 @@ namespace GM.Blog.API.Controllers
         /// Создание роли
         /// </summary>
         /// <remarks>
-        /// Данный метод позволяет создать новую роль. Подробное описание свойств  -  см. схему RoleApiCreateModel
+        /// Данный метод позволяет создать новую роль. Подробное описание свойств  -  см. схему RoleCreateViewModel
         /// </remarks>
         /// <response code="200">Роль успешно создана</response>
         /// <response code="400">Ошибка при создании роли</response>
