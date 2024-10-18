@@ -34,7 +34,11 @@ namespace GM.Blog.BLL.Services
             return true;
         }
 
-       
+        public IAsyncEnumerable<Tag>? GetTagByPostAsync(Guid postId) =>  _tagRepository.Items
+                                            .SelectMany(t => t.Posts, (t, p) => new { Tag = t, PostId = p.Id })
+                                            .Where(o => o.PostId == postId)
+                                            .Select(o => o.Tag).AsAsyncEnumerable();
+
         public async Task<TagsViewModel?> GetTagsAsync(Guid? tagId, Guid? postId)
         {
             var model = new TagsViewModel();

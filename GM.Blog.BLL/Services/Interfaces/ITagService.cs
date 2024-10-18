@@ -26,6 +26,11 @@ namespace GM.Blog.BLL.Services.Interfaces
         Task<TagsViewModel?> GetTagsAsync(Guid? tagId, Guid? postId);
 
         /// <summary>
+        /// Получение списка тегов для статьи
+        /// </summary>
+        public IAsyncEnumerable<Tag>? GetTagByPostAsync(Guid postId);
+
+        /// <summary>
         /// Получение модели редактирования тега
         /// </summary>
         /// <param name="id">Идентификатор</param>
