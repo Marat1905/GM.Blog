@@ -66,6 +66,11 @@ namespace GM.Blog.BLL.Services.Interfaces
         Task<string?> CheckTagNameAsync(string name);
 
         /// <summary>
+        /// Проверка тегов на существование при создании статьи
+        /// </summary>
+        public IAsyncEnumerable<string> CheckTagsForCreatePostAsync(string tags);
+
+        /// <summary>
         /// Присвоение тегов посту
         /// </summary>
         /// <param name="postTags"></param>

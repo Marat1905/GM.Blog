@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using static Azure.Core.HttpHeader;
 
 namespace GM.Blog.BLL.Services
 {
@@ -109,6 +110,19 @@ namespace GM.Blog.BLL.Services
             if (await _tagRepository.Items.AnyAsync(x => x.Name == name))
                 return $"Тег с именем [{name}] уже существует!";
             else return null;
+        }
+
+        public async IAsyncEnumerable<string> CheckTagsForCreatePostAsync(string tags)
+        {
+            var messages = new List<string>();
+            var tagsArr = tags.Trim().Split(' ');
+
+            foreach (var tagName in tagsArr)
+            {
+                var tag = await _tagRepository.Items.Include(t => t.Posts).FirstOrDefaultAsync(t => t.Name == tagName);
+                if (tag == null)
+                   yield return ($"Тег [{tagName}] не существует!");
+            }
         }
 
         public async IAsyncEnumerable<Tag> SetTagsForPostAsync(string? postTags)
