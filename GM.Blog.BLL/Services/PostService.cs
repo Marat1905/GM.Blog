@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 
 namespace GM.Blog.BLL.Services
 {
@@ -30,6 +31,8 @@ namespace GM.Blog.BLL.Services
             _tagService = tagService;
             _logger = logger;
         }
+
+       
 
         public async Task<bool> CreatePostAsync(PostCreateViewModel model)
         {
@@ -56,6 +59,8 @@ namespace GM.Blog.BLL.Services
             }
             return new ForbidResult();
         }
+
+        public async Task DeletePostAsync(Post post) => await _postRepository.RemoveAsync(post);
 
         public async Task<Post?> GetPostByIdAsync(Guid id) =>await _postRepository.GetAsync(id);
 
@@ -122,5 +127,14 @@ namespace GM.Blog.BLL.Services
 
         public  Task<Guid> GetLastCreatePostIdByUserId(Guid userId) => _postRepository.Items.Where(p => p.UserId == userId).Select(p => p.Id)
             .OrderByDescending(id => id).FirstOrDefaultAsync();
+
+        public async IAsyncEnumerable<string> CheckByIdAsync(Guid? userId)
+        {
+            if (userId != null)
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString()!);
+                if (user == null)  yield return ($"Пользователь не найден! Id = [{userId}]");
+            }
+        }
     }
 }

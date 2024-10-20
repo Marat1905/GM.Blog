@@ -66,10 +66,20 @@ namespace GM.Blog.BLL.Services.Interfaces
         Task<IActionResult?> DeletePostAsync(Guid id, Guid userId, bool fullAccess);
 
         /// <summary>
+        /// Удаление статьи
+        /// </summary>
+        Task DeletePostAsync(Post post);
+
+        /// <summary>
         /// Получение идентификатора последней созданой статьи указанного пользователя
         /// </summary>
         /// <param name="userId">Идентификатор пользователя</param>
         /// <returns></returns>
         Task<Guid> GetLastCreatePostIdByUserId(Guid userId);
+
+        /// <summary>
+        /// Проверка сущностей по идентификаторам
+        /// </summary>
+        IAsyncEnumerable<string> CheckByIdAsync(Guid? userId);
     }
 }
