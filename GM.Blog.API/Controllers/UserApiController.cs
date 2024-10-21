@@ -30,7 +30,8 @@ namespace GM.Blog.API.Controllers
         /// </summary>
         /// <remarks>Данный метод возвращает массив пользователей</remarks>
         /// <param name="id">ID пользователя. Оставить пустым для получения полного списка пользователей</param>
-
+        /// <response code="200">Массив пользователей. При указании ID массив будет состоять из одного элемента</response>
+        /// <response code="404">Пользователь не найден по указанному идентификатору</response>
         [HttpGet]
         [ProducesResponseType<UserViewModel[]>(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -58,6 +59,9 @@ namespace GM.Blog.API.Controllers
         /// <remarks>
         /// Данный метод позволяет создать нового пользователя
         /// </remarks>
+        /// <response code="200">Новый пользователь успешно создан</response>
+        /// <response code="400">Ошибка при создании нового пользователя</response>
+        /// <response code="409">Ошибки при указании данных для создания пользователя</response>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -86,6 +90,10 @@ namespace GM.Blog.API.Controllers
         /// <remarks>
         /// Данный метод позволяет обновлять информацию существующего пользователя. Подробное описание свойств  -  см. схему UserEditViewModel
         /// </remarks>
+        /// <response code="200">Возвращает объект пользователя с обновленными данными</response>
+        /// <response code="400">Ошибка при обновлении пользователя</response>
+        /// <response code="404">Пользователь для обновления не найден</response>
+        /// <response code="422">Ошибки при обновлении ролей пользователя</response>
         [HttpPut]
         [ProducesResponseType<UserEditViewModel>(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -113,7 +121,11 @@ namespace GM.Blog.API.Controllers
         /// </summary>
         /// <remarks>Данный метод позволяет удалить пользователя</remarks>
         /// <param name="id">Идентификатор пользователя, которого необходимо удалить</param>
+        /// <response code="200">Возвращает объект пользователя, который был удалён</response>
+        /// <response code="400">Ошибка при удалении пользователя</response>
+        /// <response code="404">Пользователь для удаления не найден</response>
         [HttpDelete]
+        [Produces("application/json")]
         [Route("{id}")]
         [ProducesResponseType<UserViewModel>(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

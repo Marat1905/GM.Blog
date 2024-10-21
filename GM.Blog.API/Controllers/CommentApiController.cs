@@ -62,7 +62,7 @@ namespace GM.Blog.API.Controllers
         /// Не указывать для получения полного списка комментариев
         /// </param>
         /// <response code="200">Получение списка комментариев</response>
-        /// <response code="">Не удалось найти комментарии по указанному идентификатору</response>
+        /// <response code="404">Не удалось найти комментарии по указанному идентификатору</response>
         [HttpGet]
         [ProducesResponseType<CommentViewModel>(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

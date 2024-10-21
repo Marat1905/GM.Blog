@@ -4,6 +4,7 @@ using System.Reflection;
 using GM.Blog.BLL;
 using GM.Blog.DAL.Context;
 using GM.Blog.DAL.Entityes;
+using GM.Blog.BLL.ViewModels.Users.Response;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +15,16 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>
 );
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+//builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwaggerGen(opt =>
+{
+    var xmlFileName = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xml = $"{Assembly.GetAssembly(typeof(UserViewModel)).GetName().Name}.xml";
+    opt.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFileName));
+    opt.IncludeXmlComments(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, xml));
+    opt.SupportNonNullableReferenceTypes();
+});
 
 var assembly = Assembly.GetAssembly(typeof(MappingProfile));
 
@@ -41,10 +51,15 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(o =>
+    {
+        o.InjectStylesheet("/css/swagger-custom.css");
+    });
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseAuthorization();
 
