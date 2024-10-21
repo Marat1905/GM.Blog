@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GM.Blog.BLL.ViewModels.Comments.Request;
+using GM.Blog.BLL.ViewModels.Comments.Response;
 using GM.Blog.BLL.ViewModels.Posts.Request;
 using GM.Blog.BLL.ViewModels.Posts.Response;
 using GM.Blog.BLL.ViewModels.Roles.Request;
@@ -45,6 +46,7 @@ namespace GM.Blog.BLL
             CreateMap<CommentCreateViewModel, Comment>();
             CreateMap<Comment, CommentEditViewModel>();
             CreateMap< CommentEditViewModel, Comment>();
+            CreateMap<Comment, CommentViewModel>();
 
             CreateMap<RoleCreateViewModel, Role>()
                  .ForMember(m => m.NormalizedName, opt => opt.MapFrom(p => p.Name.ToUpper()));

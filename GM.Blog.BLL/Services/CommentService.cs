@@ -5,6 +5,7 @@ using GM.Blog.BLL.ViewModels.Comments.Request;
 using GM.Blog.BLL.ViewModels.Comments.Response;
 using GM.Blog.DAL.Entityes;
 using GM.Blog.DAL.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -18,16 +19,18 @@ namespace GM.Blog.BLL.Services
         private readonly IRepository<Comment> _commentRepository;
         private readonly IUserService _userService;
         private readonly IPostService _postService;
+        private readonly UserManager<User> _userManager;
 
         public CommentService(IMapper mapper, ILogger<ICommentService> logger, 
                               IRepository<Comment> commentRepository, IUserService userService,
-                              IPostService postService)
+                              IPostService postService , UserManager<User> userManager)
         {
             _mapper = mapper;
             _logger = logger;
             _commentRepository = commentRepository;
             _userService = userService;
             _postService = postService;
+            _userManager = userManager;
         }
 
         public async Task<bool> CreateCommentAsync(CommentCreateViewModel model)
@@ -46,7 +49,8 @@ namespace GM.Blog.BLL.Services
             return true;
         }
 
-       
+        public async Task<Comment?> GetCommentByIdAsync(Guid id) => await _commentRepository.GetAsync(id);
+
         public async Task<CommentsViewModel> GetCommentsAsync(Guid? postId, Guid? userId)
         {
             var model = new CommentsViewModel();
@@ -102,6 +106,28 @@ namespace GM.Blog.BLL.Services
             return new ForbidResult();
         }
 
+        public async Task DeleteCommentAsync(Comment comment) => await _commentRepository.RemoveAsync(comment);
+
         public IAsyncEnumerable<Comment> GetAllCommentsByPostIdAsync(Guid postId) => _commentRepository.Items.Include(o => o.User).Include(o => o.Post).Where(c => c.PostId == postId).AsAsyncEnumerable();
+
+        public async IAsyncEnumerable<string> CheckByIdAsync(Guid? postId = null, Guid? userId = null)
+        {
+            var list = new List<string>();
+
+            if (postId != null)
+            {
+                var post = await _postService.GetPostByIdAsync((Guid)postId);
+                if (post == null) list.Add($"Статья не найдена! Id = [{postId}]");
+            }
+
+            if (userId != null)
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString()!);
+                if (user == null) list.Add($"Пользователь не найден! Id = [{userId}]");
+            }
+
+            foreach (var item in list)
+                yield return item;
+        }
     }
 }

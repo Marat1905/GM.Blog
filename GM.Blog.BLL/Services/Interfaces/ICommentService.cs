@@ -24,6 +24,11 @@ namespace GM.Blog.BLL.Services.Interfaces
         Task<CommentsViewModel> GetCommentsAsync(Guid? postId, Guid? userId);
 
         /// <summary>
+        /// Получение комментария по идентификатору
+        /// </summary>
+        Task<Comment?> GetCommentByIdAsync(Guid id);
+
+        /// <summary>
         /// Получение модели редактирования комментария
         /// </summary>
         /// <param name="id"></param>
@@ -49,10 +54,20 @@ namespace GM.Blog.BLL.Services.Interfaces
         Task<IActionResult?> DeleteCommentAsync(Guid id, Guid? userId, bool fullAccess);
 
         /// <summary>
+        /// Удаление комментария
+        /// </summary>
+        Task DeleteCommentAsync(Comment comment);
+
+        /// <summary>
         /// Получение всех комментариев для указанной статьи
         /// </summary>
         /// <param name="postId">Идентификатор поста</param>
         /// <returns></returns>
         IAsyncEnumerable<Comment> GetAllCommentsByPostIdAsync(Guid postId);
+
+        /// <summary>
+        /// Проверка сущностей по идентификаторам
+        /// </summary>
+        IAsyncEnumerable<string> CheckByIdAsync(Guid? postId = null, Guid? userId = null);
     }
 }
